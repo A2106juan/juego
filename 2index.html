@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super VLM Bros Quiz</title>
+    <!-- Font de Google para un estilo retro -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Tone.js para efectos de sonido -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        /* Estilos generales y del fondo animado */
+        body {
+            font-family: 'Press Start 2P', cursive;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #6a89cc;
+            background: linear-gradient(to bottom, #6a89cc 0%, #a4d2ed 100%);
+            color: #fff;
+            text-align: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animación del fondo con nubes */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 300%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20'%3E%3Cpath fill='%23ffffff' fill-opacity='0.4' d='M0,10 C15,20 35,0 50,10 C65,20 85,0 100,10 L100,20 L0,20 Z'/%3E%3Cpath fill='%23ffffff' fill-opacity='0.6' d='M0,15 C10,5 25,20 40,15 C55,10 70,20 85,15 C90,10 95,15 100,10 L100,20 L0,20 Z'/%3E%3C/svg%3E");
+            background-repeat: repeat-x;
+            background-size: 33.33% 100%;
+            animation: cloud-scroll 60s linear infinite;
+        }
+
+        @keyframes cloud-scroll {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                transform: translateX(-33.33%);
+            }
+        }
+
+        /* Contenedor principal del juego */
+        .game-container {
+            background-color: rgba(74, 93, 140, 0.9);
+            border: 10px solid #8d6e63;
+            border-radius: 20px;
+            box-shadow: 0 15px 0 #5f4a41;
+            width: 90%;
+            max-width: 650px;
+            height: 90vh;
+            padding: 30px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            z-index: 1; /* Asegura que el contenedor esté sobre el fondo animado */
+        }
+
+        /* Encabezado con vidas, puntos y temporizador */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 15px 25px;
+            background-color: rgba(26, 42, 71, 0.8);
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            -webkit-text-stroke: 1px black; /* Contorno de texto */
+            text-shadow: 2px 2px 0px #000;
+        }
+        .header-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-item span {
+            color: #ffde00;
+        }
+
+        /* Área principal del juego */
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+        }
+
+        /* Clases para mostrar/ocultar pantallas */
+        .hidden {
+            display: none !important;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Barra de progreso */
+        .progress-bar-container {
+            width: 100%;
+            height: 25px;
+            background-color: #5f4a41;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #27ae60;
+            background-image: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            transition: width 0.3s ease-in-out;
+            border-radius: 12px;
+        }
+
+        /* Bloque de preguntas */
+        .question-block {
+            background-color: #ffde00;
+            background-image: linear-gradient(to bottom, #ffde00, #de8b00);
+            border: 6px solid #b3391b;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+            position: relative;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 0 #5f4a41;
+            /* Se eliminó la transformación de inclinación para solucionar el problema de visibilidad */
+        }
+
+        .question-block p {
+            font-family: 'Press Start 2P', cursive;
+            color: #444;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-shadow: 1px 1px 2px #fff;
+        }
+
+        /* Contenedor de opciones de respuesta */
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .option-button {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #e44d26;
+            background-image: linear-gradient(to right, #e44d26, #b3391b);
+            color: #fff;
+            border: none;
+            padding: 18px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 6px 0 #b3391b;
+            -webkit-text-stroke: 1px black;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        .option-button:hover {
+            background-image: linear-gradient(to right, #ff6347, #b3391b);
+            box-shadow: 0 4px 0 #b3391b;
+            transform: translateY(2px);
+        }
+
+        .option-button:active {
+            box-shadow: none;
+            transform: translateY(6px);
+        }
+
+        /* Botones de inicio, reinicio y siguiente pregunta */
+        .button {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #27ae60;
+            background-image: linear-gradient(to right, #27ae60, #1b7440);
+            color: #fff;
+            border: none;
+            padding: 20px 40px;
+            font-size: 1.5em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #1b7440;
+            transition: all 0.2s ease-in-out;
+            margin-top: 20px;
+            -webkit-text-stroke: 1px black;
+            text-shadow: 2px 2px 0px #000;
+        }
+        .button:hover {
+            background-image: linear-gradient(to right, #2ecc71, #1b7440);
+            box-shadow: 0 4px 0 #1b7440;
+            transform: translateY(2px);
+        }
+        .button:active {
+            box-shadow: none;
+            transform: translateY(6px);
+        }
+
+        /* Estilos para respuestas correctas e incorrectas */
+        .correct {
+            background-image: linear-gradient(to right, #28a745, #1a712f) !important;
+            box-shadow: 0 6px 0 #1a712f !important;
+        }
+
+        .incorrect {
+            background-image: linear-gradient(to right, #dc3545, #9d2531) !important;
+            box-shadow: 0 6px 0 #9d2531 !important;
+        }
+
+        /* Estilos de la pantalla de resultados y dificultad */
+        #result-screen, #difficulty-screen {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 40px;
+            border-radius: 20px;
+        }
+        #result-screen h2, #difficulty-screen h2 {
+            -webkit-text-stroke: 1px black;
+            text-shadow: 2px 2px 0px #000;
+        }
+        #result-message {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .final-score-display {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .difficulty-options button {
+            font-family: 'Press Start 2P', cursive;
+            background-image: linear-gradient(to right, #e44d26, #b3391b);
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #b3391b;
+            transition: all 0.2s ease-in-out;
+            margin: 10px;
+            -webkit-text-stroke: 1px black;
+            text-shadow: 2px 2px 0px #000;
+        }
+        .difficulty-options button:hover {
+            background-image: linear-gradient(to right, #ff6347, #b3391b);
+            box-shadow: 0 3px 0 #b3391b;
+            transform: translateY(2px);
+        }
+        .difficulty-options button:active {
+            box-shadow: none;
+            transform: translateY(5px);
+        }
+        
+        h1, h2 {
+            -webkit-text-stroke: 1px black;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        /* Adaptación para pantallas pequeñas */
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 15px;
+            }
+            .header {
+                font-size: 1em;
+                padding: 10px;
+            }
+            .question-block p {
+                font-size: 0.9em;
+            }
+            .option-button {
+                font-size: 0.9em;
+                padding: 15px;
+            }
+            .button {
+                padding: 15px 30px;
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <div class="header">
+            <div class="header-item score-display">
+                ⭐ PUNTOS: <span id="score">0</span>
+            </div>
+            <div class="header-item lives-display">
+                ❤️ VIDAS: <span id="lives">3</span>
+            </div>
+            <div class="header-item timer-display">
+                ⏱️ TIEMPO: <span id="time">10</span>s
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div id="start-screen" class="screen">
+                <div class="start-message">
+                    <h1>¡Super VLM Quiz!</h1>
+                    <p>¡Ayuda a Mario a responder las preguntas para avanzar!</p>
+                </div>
+                <button id="startButton" class="button">¡Jugar!</button>
+            </div>
+
+            <div id="difficulty-screen" class="screen hidden">
+                <h2>Elige la Dificultad</h2>
+                <div class="difficulty-options">
+                    <button id="easy-mode">Fácil</button>
+                    <button id="medium-mode">Medio</button>
+                    <button id="hard-mode">Difícil</button>
+                </div>
+            </div>
+            
+            <div id="question-screen" class="screen hidden">
+                <div class="progress-bar-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                <div class="question-block">
+                    <p id="question-text"></p>
+                </div>
+                <div class="options-container">
+                    <button class="option-button"></button>
+                    <button class="option-button"></button>
+                    <button class="option-button"></button>
+                    <button class="option-button"></button>
+                </div>
+                <button id="nextButton" class="button hidden">Siguiente</button>
+            </div>
+
+            <div id="result-screen" class="screen hidden">
+                <h2 id="result-message"></h2>
+                <div class="final-score-display">Tu puntaje final es: <span id="final-score">0</span></div>
+                <button id="restartButton" class="button">Jugar de Nuevo</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Configuración de los efectos de sonido
+        const correctSound = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: 'triangle' },
+            envelope: {
+                attack: 0.05,
+                decay: 0.1,
+                sustain: 0.2,
+                release: 0.5
+            }
+        }).toDestination();
+        const incorrectSound = new Tone.NoiseSynth({
+            envelope: {
+                attack: 0.005,
+                decay: 0.1,
+                sustain: 0,
+                release: 0.1
+            }
+        }).toDestination();
+        const nextQuestionSound = new Tone.MembraneSynth().toDestination();
+        
+        // --- Preguntas del juego ---
+        const questions = [
+            {
+                "question": "¿Qué significa el acrónimo VLM?",
+                "options": ["Very Large Machine", "Vision-Language Model", "Video and Listening Model", "Virtual Learning Module"],
+                "answer": "Vision-Language Model"
+            },
+            {
+                "question": "Un VLM puede entender y procesar información de texto, pero no puede entender imágenes.",
+                "options": ["Verdadero", "Falso"],
+                "answer": "Falso"
+            },
+            {
+                "question": "¿Qué tecnología se utiliza para que los VLM 'vean' y 'lean'?",
+                "options": ["Solo un teclado y un ratón.", "Modelos de lenguaje y modelos de visión.", "Una impresora 3D.", "Un micrófono para escuchar lo que dices."],
+                "answer": "Modelos de lenguaje y modelos de visión."
+            },
+            {
+                "question": "Un VLM podría describir lo que está sucediendo en una imagen.",
+                "options": ["Sí", "No"],
+                "answer": "Sí"
+            },
+            {
+                "question": "¿Cuál de las siguientes es una habilidad que un VLM podría tener?",
+                "options": ["Crear un nuevo tipo de metal.", "Encontrar imágenes de 'gatos jugando con un ovillo de lana'.", "Construir un robot físico.", "Predecir el futuro."],
+                "answer": "Encontrar imágenes de 'gatos jugando con un ovillo de lana'."
+            },
+            {
+                "question": "Un VLM es capaz de entender un chiste visual, como un meme que combina una imagen con texto, y explicar por qué es gracioso.",
+                "options": ["Sí, porque pueden entender la relación entre la imagen y el texto.", "No, solo pueden procesar imágenes y texto por separado."],
+                "answer": "Sí, porque pueden entender la relación entre la imagen y el texto."
+            },
+            {
+                "question": "Un VLM podría ser usado por una persona con discapacidad visual para que describa en voz alta las imágenes de una página web.",
+                "options": ["Sí, los VLM pueden ayudar a las personas a 'ver' las imágenes a través de descripciones de texto.", "No, los VLM no tienen una utilidad práctica como esa."],
+                "answer": "Sí, los VLM pueden ayudar a las personas a 'ver' las imágenes a través de descripciones de texto."
+            },
+            {
+                "question": "Un VLM podría ayudarte a generar texto a partir de una imagen. Por ejemplo, te podría decir qué tipo de ropa lleva una persona en una foto.",
+                "options": ["Verdadero", "Falso"],
+                "answer": "Verdadero"
+            },
+            {
+                "question": "Un VLM es un modelo de inteligencia artificial que solo procesa datos de audio, como música y voces.",
+                "options": ["Verdadero", "Falso"],
+                "answer": "Falso"
+            },
+            {
+                "question": "¿Cuál es un ejemplo de una tarea que un VLM podría realizar?",
+                "options": ["Traducir una canción a un idioma diferente.", "Escribir un poema a partir de una foto de un paisaje.", "Hornear un pastel.", "Cantar una canción."],
+                "answer": "Escribir un poema a partir de una foto de un paisaje."
+            },
+            {
+                "question": "Un VLM puede analizar el contenido de un video completo para resumir lo que sucede en él.",
+                "options": ["Verdadero", "Falso"],
+                "answer": "Verdadero"
+            },
+            {
+                "question": "Para que un VLM funcione, necesita que alguien le dé las imágenes y el texto por separado para que los procese de uno en uno.",
+                "options": ["Verdadero", "Falso"],
+                "answer": "Falso"
+            },
+            {
+                "question": "¿Qué problema resuelve un VLM?",
+                "options": ["Traducir un texto de un idioma a otro.", "Entender la relación entre una imagen y el texto que la acompaña.", "Solucionar ecuaciones matemáticas sin texto.", "Cargar un sitio web más rápido."],
+                "answer": "Entender la relación entre una imagen y el texto que la acompaña."
+            },
+            {
+                "question": "Un VLM puede generar un texto que no tiene nada que ver con la imagen que se le ha dado.",
+                "options": ["Verdadero", "Falso"],
+                "answer": "Falso"
+            },
+            {
+                "question": "¿Cuál es la principal ventaja de usar un VLM en lugar de un modelo que solo procesa texto?",
+                "options": ["Es más rápido para procesar texto.", "Puede entender el contexto de una imagen y el texto juntos.", "Es mucho más pequeño y no ocupa mucho espacio en la computadora.", "No necesita internet para funcionar."],
+                "answer": "Puede entender el contexto de una imagen y el texto juntos."
+            },
+            {
+                "question": "Un VLM es capaz de identificar objetos en una imagen y nombrarlos en el texto que genera.",
+                "options": ["Verdadero", "Falso"],
+                "answer": "Verdadero"
+            },
+            {
+                "question": "¿Qué modelo de IA es más adecuado para una tarea que solo requiere la comprensión de texto?",
+                "options": ["Un VLM (Modelo de Lenguaje Visual).", "Un modelo de lenguaje (LLM).", "Un modelo de visión.", "Un VLM o un modelo de lenguaje, ambos son igual de buenos."],
+                "answer": "Un modelo de lenguaje (LLM)."
+            },
+            {
+                "question": "Los VLM pueden ser utilizados para generar imágenes a partir de descripciones de texto.",
+                "options": ["Verdadero", "Falso"],
+                "answer": "Falso"
+            },
+            {
+                "question": "¿Qué tipo de datos procesa un VLM?",
+                "options": ["Solo texto escrito.", "Solo imágenes y videos.", "Ambos, imágenes y texto.", "Solo audio."],
+                "answer": "Ambos, imágenes y texto."
+            },
+            {
+                "question": "Un VLM podría ayudar a un científico a analizar datos de imágenes de satélite y generar informes escritos sobre lo que ve.",
+                "options": ["Verdadero", "Falso"],
+                "answer": "Verdadero"
+            }
+        ];
+
+        let score = 0;
+        let lives = 3;
+        let currentQuestionIndex = 0;
+        let timer = 10;
+        let timerInterval;
+        let questionsPerGame;
+        let difficultySettings;
+
+        // Elementos del DOM
+        const startScreen = document.getElementById('start-screen');
+        const difficultyScreen = document.getElementById('difficulty-screen');
+        const questionScreen = document.getElementById('question-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const nextButton = document.getElementById('nextButton');
+        const easyButton = document.getElementById('easy-mode');
+        const mediumButton = document.getElementById('medium-mode');
+        const hardButton = document.getElementById('hard-mode');
+
+        const scoreDisplay = document.getElementById('score');
+        const livesDisplay = document.getElementById('lives');
+        const timeDisplay = document.getElementById('time');
+        const questionText = document.getElementById('question-text');
+        const optionButtons = document.querySelectorAll('.option-button');
+        const resultMessage = document.getElementById('result-message');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const progressBar = document.getElementById('progress-bar');
+        
+        // --- Lógica del juego ---
+
+        // Función para mezclar las preguntas
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Inicia el juego y la selección de dificultad
+        function showDifficultyScreen() {
+            startScreen.classList.add('hidden');
+            difficultyScreen.classList.remove('hidden');
+        }
+
+        function startGame(difficulty) {
+            difficultySettings = difficulty;
+            score = 0;
+            lives = difficultySettings.lives;
+            timer = difficultySettings.time;
+            questionsPerGame = difficultySettings.questions;
+            currentQuestionIndex = 0;
+
+            scoreDisplay.textContent = score;
+            livesDisplay.textContent = lives;
+            timeDisplay.textContent = timer;
+            
+            shuffleArray(questions);
+            difficultyScreen.classList.add('hidden');
+            questionScreen.classList.remove('hidden');
+            resultScreen.classList.add('hidden');
+            
+            showQuestion();
+            startTimer();
+            updateProgressBar();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timer--;
+                timeDisplay.textContent = timer;
+                if (timer <= 0) {
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function updateProgressBar() {
+            const progress = (currentQuestionIndex / questionsPerGame) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+        
+        // Muestra la pregunta actual
+        function showQuestion() {
+            if (currentQuestionIndex >= questionsPerGame || lives <= 0) {
+                endGame();
+                return;
+            }
+            
+            nextButton.classList.add('hidden');
+            timer = difficultySettings.time;
+            timeDisplay.textContent = timer;
+            startTimer();
+
+            const currentQuestion = questions[currentQuestionIndex];
+            questionText.textContent = currentQuestion.question;
+
+            optionButtons.forEach((button, index) => {
+                button.textContent = currentQuestion.options[index];
+                button.classList.remove('correct', 'incorrect');
+                button.style.display = 'block'; // Muestra todos los botones
+                button.disabled = false;
+                button.onclick = () => handleAnswer(button.textContent, button);
+            });
+            
+            // Oculta los botones no utilizados para preguntas con menos opciones
+            for (let i = currentQuestion.options.length; i < optionButtons.length; i++) {
+                optionButtons[i].style.display = 'none';
+            }
+            
+            updateProgressBar();
+        }
+
+        // Maneja la respuesta del usuario
+        function handleAnswer(selectedOption, button) {
+            clearInterval(timerInterval);
+            const currentQuestion = questions[currentQuestionIndex];
+            if (selectedOption === currentQuestion.answer) {
+                score += 10;
+                scoreDisplay.textContent = score;
+                button.classList.add('correct');
+                correctSound.triggerAttackRelease('C4', '8n');
+            } else {
+                lives -= 1;
+                livesDisplay.textContent = lives;
+                button.classList.add('incorrect');
+                incorrectSound.triggerAttackRelease('8n');
+            }
+            
+            optionButtons.forEach(btn => btn.disabled = true);
+            nextButton.classList.remove('hidden');
+        }
+
+        function handleTimeOut() {
+            lives--;
+            livesDisplay.textContent = lives;
+            incorrectSound.triggerAttackRelease('8n');
+            
+            optionButtons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === questions[currentQuestionIndex].answer) {
+                    btn.classList.add('correct');
+                }
+            });
+            nextButton.classList.remove('hidden');
+        }
+
+        // Termina el juego y muestra el resultado
+        function endGame() {
+            clearInterval(timerInterval);
+            questionScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            finalScoreDisplay.textContent = score;
+            if (lives > 0) {
+                resultMessage.textContent = "¡Ganaste! ¡Lo has hecho excelente!";
+            } else {
+                resultMessage.textContent = "¡Game Over! ¡Pero no te rindas!";
+            }
+        }
+
+        // --- Asignar eventos a los botones ---
+        startButton.addEventListener('click', showDifficultyScreen);
+        restartButton.addEventListener('click', showDifficultyScreen);
+        nextButton.addEventListener('click', () => {
+            currentQuestionIndex++;
+            showQuestion();
+            nextQuestionSound.triggerAttackRelease('C4', '16n');
+        });
+        
+        easyButton.addEventListener('click', () => {
+            startGame({ lives: 5, time: 20, questions: 10 });
+        });
+        mediumButton.addEventListener('click', () => {
+            startGame({ lives: 3, time: 10, questions: 15 });
+        });
+        hardButton.addEventListener('click', () => {
+            startGame({ lives: 1, time: 5, questions: 20 });
+        });
+        
+    </script>
+</body>
+</html>
